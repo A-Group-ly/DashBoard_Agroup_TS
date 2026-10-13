@@ -1,0 +1,48 @@
+{
+  "name": "agroup-dashboard",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "A-Group financial dashboard: React + Cloudflare Workers + Neon Postgres + Clerk",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "dev": "vite",
+    "dev:api": "node -e \"require('fs').mkdirSync('dist',{recursive:true})\" && wrangler dev --port 8787",
+    "build": "vite build",
+    "preview": "vite build && wrangler dev --port 8787",
+    "typecheck": "tsc -b",
+    "lint": "eslint .",
+    "test": "tsx --test tests/*.test.ts",
+    "check": "npm run typecheck && npm run lint && npm test && npm run build",
+    "deploy": "vite build && wrangler deploy",
+    "db:setup": "node scripts/db-setup.mjs",
+    "db:seed": "node scripts/db-setup.mjs --seed-only"
+  },
+  "dependencies": {
+    "@clerk/react": "^6.0.0",
+    "@neondatabase/serverless": "^1.0.0",
+    "lucide-react": "^1.55.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@tailwindcss/vite": "^4.1.0",
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "eslint": "^10.10.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.6",
+    "globals": "^17.12.0",
+    "tailwindcss": "^4.1.0",
+    "tsx": "^4.20.0",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.69.0",
+    "vite": "^8.3.0",
+    "wrangler": "^4.0.0"
+  }
+}

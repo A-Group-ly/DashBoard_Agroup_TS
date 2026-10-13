@@ -1,0 +1,24 @@
+// Cloudflare Worker config: one worker serves the API and the built React app.
+// Secrets (DATABASE_URL, CLERK_SECRET_KEY, ...) are NOT stored here.
+// Add them with `npx wrangler secret put NAME` or in the Cloudflare dashboard.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "agroup-dashboard",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-06-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Built by `vite build`. Unknown paths fall back to index.html so /team works
+  // on refresh; /api/* always goes to the worker first.
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+
+  // Keep variables set in the Cloudflare dashboard when deploying from CI.
+  "keep_vars": true,
+
+  "observability": { "enabled": true }
+}
