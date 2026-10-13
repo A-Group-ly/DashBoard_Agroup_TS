@@ -1,6 +1,8 @@
 import { SignIn, SignUp } from "@clerk/react";
 import { ChartColumn, LockKeyhole, ShieldCheck } from "lucide-react";
 
+const YEAR = new Date().getFullYear();
+
 const FEATURES = [
   { icon: ChartColumn, text: "Live subscription, revenue and profit figures" },
   { icon: ShieldCheck, text: "Role-based access for finance and support teams" },
@@ -45,7 +47,7 @@ export function AuthPage({ mode }: { mode: "sign-in" | "sign-up" }) {
         </div>
 
         <p className="relative mt-8 hidden text-xs text-white/40 lg:block">
-          © {new Date().getFullYear()} A-Group · Tripoli, Libya
+          © {YEAR} A-Group · Tripoli, Libya
         </p>
       </aside>
 
