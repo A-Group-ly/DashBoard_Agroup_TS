@@ -25,6 +25,7 @@ The A-Group dashboard brings subscription activity and financial summaries into 
 - **Financial overview first:** total paid, net profit/loss, outstanding debts (with how much is already paid), what customers still owe, and what is due by the end of the current month.
 - **Date filters:** daily, weekly, monthly, quarterly, semiannual, and any custom date range.
 - **Fair comparisons:** every range is compared with the equivalent previous period. A period that is still running is compared to the same point last time (1–14 Oct vs 1–14 Sep); a custom range is compared with the same number of days just before it.
+- **Charts slideshow:** the charts rotate every 8 seconds with a progress bar. They pause while you point at them, while you use the keyboard there, for 12 seconds after a touch, and while the tab is hidden. You can also click a tab, use the arrow keys, or swipe on phones. Devices set to "reduce motion" do not auto-rotate.
 - **Charts section** with tabs: revenue vs expenses (line), net profit (bar), revenue by payment method and by plan (pie), and subscriptions (bar + pie). Every chart has hover tooltips and works in both themes.
 - Subscription, payment, expense, profit/loss, and payable figures from PostgreSQL.
 - Separate LYD and USD totals; currencies are not added together.

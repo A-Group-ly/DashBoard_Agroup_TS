@@ -367,6 +367,59 @@
   color-scheme: dark;
 }
 
+/* Chart slideshow */
+.slide-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.85);
+  transform-origin: left center;
+  animation-name: slide-progress;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes slide-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.slide-in-next {
+  animation: slide-in-next 380ms var(--ease-out);
+}
+
+.slide-in-prev {
+  animation: slide-in-prev 380ms var(--ease-out);
+}
+
+@keyframes slide-in-next {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes slide-in-prev {
+  from {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* Reduced motion: keep colour feedback, drop movement */
 @media (prefers-reduced-motion: reduce) {
   .app-shell *,
