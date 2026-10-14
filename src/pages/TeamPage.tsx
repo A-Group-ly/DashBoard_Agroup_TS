@@ -37,9 +37,30 @@ export function TeamPage({ currentUser }: { currentUser: CurrentUser }) {
     }
   }, [api]);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+ useEffect(() => {
+  let cancelled = false;
+
+  api<TeamMember[]>("/api/team")
+    .then((data) => {
+      if (cancelled) return;
+
+      setMembers(data);
+      setError(null);
+    })
+    .catch((err: unknown) => {
+      if (cancelled) return;
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not load the team.",
+      );
+    });
+
+  return () => {
+    cancelled = true;
+  };
+}, [api]);
 
   async function update(member: TeamMember, changes: { role?: Role; isActive?: boolean }) {
     setSavingId(member.id);
