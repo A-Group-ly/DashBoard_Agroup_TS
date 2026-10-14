@@ -1,163 +1,67 @@
-import { useEffect, useRef, useState } from "react";
-import {
-  Activity,
-  CircleCheck,
-  CreditCard,
-  Download,
-  LoaderCircle,
-  Receipt,
-  RefreshCw,
-  Wallet,
-} from "lucide-react";
+import { useCallback, useState } from "react";
+import { CircleCheck, Download, LoaderCircle, Lock, RefreshCw, TriangleAlert } from "lucide-react";
 
 import { can } from "../../shared/permissions";
-import type { Currency, CurrentUser, DashboardSummary, Period } from "../../shared/types";
-import {
-  FinanceLockedCard,
-  MiniStat,
-  PayablesCard,
-  ProfitCard,
-  RecentSubscriptions,
-  StatusBreakdown,
-  SubscriptionCard,
-} from "../components/cards";
-import { ProfitChart } from "../components/ProfitChart";
-import { useApi } from "../lib/api";
-import { COMPANY_TIME_ZONE, money } from "../lib/format";
+import type { Currency, CurrentUser, DashboardSummary } from "../../shared/types";
+import { RecentSubscriptions } from "../components/cards";
+import { ChartsSection } from "../components/charts/ChartsSection";
+import { FinanceOverview, SubscriptionKpis } from "../components/overview";
+import { PeriodPicker } from "../components/PeriodPicker";
+import { daysAgo, todayLocal } from "../lib/dates";
+import { COMPANY_TIME_ZONE } from "../lib/format";
+import { useDashboardSummary, type DashboardFilter } from "../lib/useDashboardSummary";
 
-const REFRESH_INTERVAL_SECONDS = 60;
+const timeFormat = new Intl.DateTimeFormat("en-GB", {
+  timeZone: COMPANY_TIME_ZONE,
+  hour: "2-digit",
+  minute: "2-digit",
+});
 
 export function DashboardPage({ user }: { user: CurrentUser }) {
-  const api = useApi();
-  const [period, setPeriod] = useState<Period>("monthly");
+  const [filter, setFilter] = useState<DashboardFilter>(() => ({
+    period: "month",
+    from: daysAgo(29),
+    to: todayLocal(),
+  }));
   const [currency, setCurrency] = useState<Currency>("LYD");
-  const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [reloadKey, setReloadKey] = useState(0);
-  const [clock, setClock] = useState<Date>(() => new Date());
-  const [secondsUntilRefresh, setSecondsUntilRefresh] = useState(REFRESH_INTERVAL_SECONDS);
-  const countdownRef = useRef(REFRESH_INTERVAL_SECONDS);
-
+  const { data: summary, isStale, loading, error, updatedAt, refresh } = useDashboardSummary(filter, user.id);
   const canExport = can(user.role, "finance:export");
-
-  // Auto-refresh every 60 seconds, with a visible countdown.
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setClock(new Date());
-      const next = countdownRef.current - 1;
-      if (next <= 0) {
-        countdownRef.current = REFRESH_INTERVAL_SECONDS;
-        setSecondsUntilRefresh(REFRESH_INTERVAL_SECONDS);
-        setReloadKey((value) => value + 1);
-      } else {
-        countdownRef.current = next;
-        setSecondsUntilRefresh(next);
-      }
-    }, 1000);
-    return () => window.clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    async function load() {
-      setLoading(true);
-      try {
-        const result = await api<DashboardSummary>(`/api/dashboard/summary?period=${period}`, {
-          signal: controller.signal,
-        });
-        setSummary(result);
-        setError(null);
-      } catch (err) {
-        if (err instanceof Error && err.name !== "AbortError") setError(err.message);
-      } finally {
-        if (!controller.signal.aborted) setLoading(false);
-      }
-    }
-
-    void load();
-    return () => controller.abort();
-  }, [api, period, reloadKey]);
-
-  function resetCountdown() {
-    countdownRef.current = REFRESH_INTERVAL_SECONDS;
-    setSecondsUntilRefresh(REFRESH_INTERVAL_SECONDS);
-    setClock(new Date());
-  }
-
-  function refreshNow() {
-    resetCountdown();
-    setReloadKey((value) => value + 1);
-  }
-
-  function selectPeriod(option: Period) {
-    setPeriod(option);
-    resetCountdown();
-  }
-
-  const countdownLabel = `${String(Math.floor(secondsUntilRefresh / 60)).padStart(2, "0")}:${String(
-    secondsUntilRefresh % 60,
-  ).padStart(2, "0")}`;
-
-  const currentDateLabel = new Intl.DateTimeFormat("en-US", {
-    timeZone: COMPANY_TIME_ZONE,
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(clock);
-
   const finance = summary?.finance ?? null;
-  const subs = summary?.subscriptions;
+
+  const onFilterChange = useCallback((next: DashboardFilter) => setFilter(next), []);
 
   return (
     <div className="space-y-5 sm:space-y-7">
-      {/* Toolbar */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <p className="font-display text-base font-bold text-slate-900 sm:text-lg">
-            {summary?.range.current.label ?? "Loading..."}
-          </p>
-          <p className="mt-0.5 text-xs text-slate-500">
-            {currentDateLabel} · Tripoli time
-            {summary && ` · compared with ${summary.range.previous.label}`}
-          </p>
-        </div>
+      {/* Filters: one row above everything they control */}
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+        <PeriodPicker value={filter} onChange={onFilterChange} />
 
-        <div className="grid grid-cols-[1fr_auto_auto] items-center gap-2 sm:flex sm:flex-wrap sm:gap-3">
-          <div className="flex rounded-xl border border-slate-300 bg-slate-200 p-1">
-            {(["monthly", "weekly"] as Period[]).map((option) => (
-              <button
-                type="button"
-                key={option}
-                onClick={() => selectPeriod(option)}
-                aria-pressed={period === option}
-                className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold capitalize transition ${
-                  period === option ? "bg-slate-700 text-white" : "text-slate-700 hover:bg-slate-300"
-                }`}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
-
-          <div
-            className="hidden items-center gap-2 rounded-xl border border-slate-300 bg-slate-200 px-3 py-2.5 text-xs font-semibold tabular-nums text-slate-700 sm:flex"
-            title="The dashboard refreshes every 60 seconds."
-          >
-            <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
-            Refresh in {countdownLabel}
-          </div>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          {finance && (
+            <div role="radiogroup" aria-label="Currency" className="flex rounded-xl border border-slate-300 bg-slate-200 p-1">
+              {(["LYD", "USD"] as Currency[]).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  role="radio"
+                  aria-checked={currency === option}
+                  onClick={() => setCurrency(option)}
+                  className={`rounded-lg px-3.5 py-2 text-sm font-semibold ${
+                    currency === option ? "bg-slate-700 text-white shadow-sm" : "text-slate-700 hover:bg-slate-300 hover:text-slate-900"
+                  }`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          )}
 
           {canExport && (
             <button
               type="button"
               onClick={() => summary && exportCsv(summary)}
               disabled={!summary?.finance}
-              className="flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-700 px-4 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-700 px-4 text-sm font-semibold text-white hover:bg-slate-800 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
               aria-label="Export CSV"
             >
               <Download size={17} />
@@ -167,130 +71,96 @@ export function DashboardPage({ user }: { user: CurrentUser }) {
 
           <button
             type="button"
-            aria-label="Refresh dashboard now"
-            onClick={refreshNow}
-            className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-300 bg-slate-200 text-slate-700 transition hover:bg-slate-300"
+            aria-label="Refresh now"
+            title="Refresh now"
+            onClick={refresh}
+            className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-300 bg-slate-200 text-slate-700 hover:border-slate-400 hover:bg-slate-300"
           >
             <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
           </button>
         </div>
       </div>
 
-      {/* Connection status */}
-      <div
-        className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium ${
-          error
-            ? "border-rose-300 bg-rose-100 text-rose-800"
+      {/* What is being compared, and freshness */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="font-display text-xl font-bold text-slate-900 sm:text-2xl">
+            {summary?.title ?? "Loading..."}
+          </h1>
+          {summary && (
+            <p className="mt-0.5 text-sm text-slate-600">
+              <span className="font-semibold text-slate-800">{summary.range.current.label}</span>
+              {summary.range.isToDate && " (so far)"} compared with{" "}
+              <span className="font-semibold text-slate-800">{summary.range.previous.label}</span>
+              {summary.range.isToDate && summary.period !== "custom" && " (same point)"}
+            </p>
+          )}
+        </div>
+
+        <div
+          className={`inline-flex shrink-0 items-center gap-2 self-start rounded-full border px-3 py-1.5 text-xs font-medium sm:self-auto ${
+            error
+              ? "border-rose-300 bg-rose-100 text-rose-800"
+              : loading
+                ? "border-slate-300 bg-slate-200 text-slate-700"
+                : "border-emerald-300 bg-emerald-100 text-emerald-800"
+          }`}
+        >
+          {error ? <TriangleAlert size={14} /> : loading ? <LoaderCircle size={14} className="animate-spin" /> : <CircleCheck size={14} />}
+          {error
+            ? "Could not refresh"
             : loading
-              ? "border-slate-300 bg-slate-200 text-slate-700"
-              : "border-emerald-300 bg-emerald-100 text-emerald-800"
-        }`}
-      >
-        {error ? (
-          <Activity size={14} />
-        ) : loading ? (
-          <LoaderCircle size={14} className="animate-spin" />
-        ) : (
-          <CircleCheck size={14} />
-        )}
-        {error ? "Could not refresh" : loading ? "Updating figures..." : "Live data · Neon Postgres"}
+              ? "Updating..."
+              : `Live · updated ${updatedAt ? timeFormat.format(updatedAt) : ""} · refreshes every minute`}
+        </div>
       </div>
 
       {error && (
         <div className="rounded-xl border border-rose-300 bg-rose-100 p-4 text-sm text-rose-800">
-          <p className="font-semibold">Could not load financial information.</p>
+          <p className="font-semibold">Could not load the figures.</p>
           <p className="mt-1">{error}</p>
-          <button
-            type="button"
-            onClick={refreshNow}
-            className="mt-3 rounded-lg border border-rose-400 px-3 py-2 font-medium"
-          >
+          <button type="button" onClick={refresh} className="mt-3 rounded-lg border border-rose-400 px-3 py-2 font-medium hover:bg-rose-200">
             Retry
           </button>
         </div>
       )}
 
-      {loading && !summary ? (
-        <div className="flex min-h-64 items-center justify-center rounded-2xl border border-slate-300 bg-slate-100">
-          <div className="flex items-center gap-3 text-slate-600">
-            <LoaderCircle className="animate-spin" />
-            Loading A-Group financial data...
-          </div>
-        </div>
-      ) : summary && subs ? (
-        <>
-          <section className="grid items-stretch gap-5 xl:grid-cols-2">
-            <div className="flex min-w-0 flex-col gap-5">
-              <SubscriptionCard
-                count={subs.current.newSubscriptions}
-                paidCount={subs.current.paidSubscriptions}
-                change={subs.change.newSubscriptions}
-              />
-              {finance ? (
-                <ProfitCard
-                  currency={currency}
-                  setCurrency={setCurrency}
-                  currentProfit={finance.current.netProfit[currency]}
-                  previousProfit={finance.previous.netProfit[currency]}
-                  change={currency === "LYD" ? finance.change.profitLYD : finance.change.profitUSD}
-                />
-              ) : (
-                <StatusBreakdown counts={subs.statusBreakdown} />
-              )}
+      {!summary ? (
+        loading && <LoadingSkeleton />
+      ) : (
+        <div className={`space-y-5 transition-opacity duration-200 sm:space-y-7 ${isStale ? "opacity-60" : ""}`} aria-busy={isStale}>
+          {finance ? (
+            <FinanceOverview finance={finance} currency={currency} periodLabel={summary.range.current.label} />
+          ) : (
+            <div className="flex items-start gap-3 rounded-2xl border border-dashed border-slate-400 bg-slate-100 p-4 text-sm text-slate-600">
+              <Lock size={18} className="mt-0.5 shrink-0 text-slate-500" />
+              <p>
+                <strong className="text-slate-800">Financial figures are hidden for your role.</strong> Revenue, expenses,
+                profit and debts need the Finance or Super admin role.
+              </p>
             </div>
-
-            <div className="min-w-0">
-              {finance ? (
-                <ProfitChart
-                  points={finance.history}
-                  currency={currency}
-                  periodWord={period === "monthly" ? "months" : "weeks"}
-                />
-              ) : (
-                <FinanceLockedCard />
-              )}
-            </div>
-          </section>
-
-          {finance && (
-            <section>
-              <div className="mb-4">
-                <h2 className="font-display text-lg font-bold text-slate-900">Financial snapshot</h2>
-                <p className="mt-1 text-sm text-slate-600">
-                  Received payments and expenses this period, separated by currency.
-                </p>
-              </div>
-              <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:gap-4 xl:grid-cols-4">
-                <MiniStat
-                  label="Payments received · LYD"
-                  value={money(finance.current.paymentsReceived.LYD, "LYD")}
-                  icon={Wallet}
-                />
-                <MiniStat
-                  label="Payments received · USD"
-                  value={money(finance.current.paymentsReceived.USD, "USD")}
-                  icon={CreditCard}
-                />
-                <MiniStat label="Expenses · LYD" value={money(finance.current.expenses.LYD, "LYD")} icon={Receipt} />
-                <MiniStat label="Expenses · USD" value={money(finance.current.expenses.USD, "USD")} icon={Receipt} />
-              </div>
-            </section>
           )}
 
-          <section className={`grid gap-5 ${finance ? "lg:grid-cols-3" : ""}`}>
-            <div className={finance ? "min-w-0 lg:col-span-2" : "min-w-0"}>
-              <RecentSubscriptions items={summary.recentSubscriptions} />
-            </div>
-            {finance && (
-              <div className="min-w-0">
-                <StatusBreakdown counts={subs.statusBreakdown} />
-              </div>
-            )}
-          </section>
+          <SubscriptionKpis subscriptions={summary.subscriptions} />
 
-          {finance && <PayablesCard payables={finance.outstandingPayables} />}
-        </>
-      ) : null}
+          <ChartsSection summary={summary} currency={currency} />
+
+          <RecentSubscriptions items={summary.recentSubscriptions} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-5" aria-label="Loading">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {[0, 1, 2, 3].map((index) => (
+          <div key={index} className="h-48 animate-pulse rounded-2xl border border-slate-300 bg-slate-200" />
+        ))}
+      </div>
+      <div className="h-80 animate-pulse rounded-2xl border border-slate-300 bg-slate-200" />
     </div>
   );
 }
@@ -299,24 +169,37 @@ function exportCsv(summary: DashboardSummary) {
   const finance = summary.finance;
   if (!finance) return;
 
-  const { current, previous } = finance;
+  const { current, previous, obligations, dueByMonthEnd } = finance;
   const subs = summary.subscriptions;
   const rows: (string | number)[][] = [
     ["A-Group financial overview", summary.range.current.label, `vs ${summary.range.previous.label}`, ""],
     ["Metric", "Current period", "Previous period", "Currency"],
     ["New subscriptions", subs.current.newSubscriptions, subs.previous.newSubscriptions, "Count"],
     ["Paid subscriptions", subs.current.paidSubscriptions, subs.previous.paidSubscriptions, "Count"],
-    ["Payments received", current.paymentsReceived.LYD, previous.paymentsReceived.LYD, "LYD"],
-    ["Payments received", current.paymentsReceived.USD, previous.paymentsReceived.USD, "USD"],
-    ["Expenses", current.expenses.LYD, previous.expenses.LYD, "LYD"],
-    ["Expenses", current.expenses.USD, previous.expenses.USD, "USD"],
-    ["Net profit / loss", current.netProfit.LYD, previous.netProfit.LYD, "LYD"],
-    ["Net profit / loss", current.netProfit.USD, previous.netProfit.USD, "USD"],
-    ["Outstanding payables", finance.outstandingPayables.LYD, "", "LYD"],
-    ["Outstanding payables", finance.outstandingPayables.USD, "", "USD"],
+    ...(["LYD", "USD"] as const).flatMap((c) => [
+      ["Total paid", current.paymentsReceived[c], previous.paymentsReceived[c], c],
+      ["Expenses", current.expenses[c], previous.expenses[c], c],
+      ["Net profit / loss", current.netProfit[c], previous.netProfit[c], c],
+    ]),
     [],
-    ["Profit history", "Net profit LYD", "Net profit USD", ""],
-    ...finance.history.map((point) => [point.key, point.netProfit.LYD, point.netProfit.USD, ""]),
+    ["As of today", "Amount", "", "Currency"],
+    ...(["LYD", "USD"] as const).flatMap((c) => [
+      ["Outstanding debts (payables)", obligations.payables.remaining[c], "", c],
+      ["Customers still owe", obligations.receivables.remaining[c], "", c],
+      [`Renewals due by ${dueByMonthEnd.label}`, dueByMonthEnd.renewals.amount[c], "", c],
+      [`Bills due by ${dueByMonthEnd.label}`, dueByMonthEnd.bills.amount[c], "", c],
+    ]),
+    [],
+    ["Period", "Payments LYD", "Expenses LYD", "Net LYD", "Payments USD", "Expenses USD", "Net USD"],
+    ...finance.history.map((point) => [
+      point.key,
+      point.revenue.LYD,
+      point.expenses.LYD,
+      point.netProfit.LYD,
+      point.revenue.USD,
+      point.expenses.USD,
+      point.netProfit.USD,
+    ]),
   ];
 
   const csv = rows
@@ -327,7 +210,7 @@ function exportCsv(summary: DashboardSummary) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `a-group-financial-overview-${summary.period}.csv`;
+  link.download = `a-group-financial-overview-${summary.period}-${summary.range.current.from.slice(0, 10)}.csv`;
   document.body.appendChild(link);
   link.click();
   link.remove();

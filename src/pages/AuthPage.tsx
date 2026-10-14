@@ -1,6 +1,8 @@
 import { SignIn, SignUp } from "@clerk/react";
 import { ChartColumn, LockKeyhole, ShieldCheck } from "lucide-react";
 
+import { BrandMark } from "../components/BrandMark";
+
 const YEAR = new Date().getFullYear();
 
 const FEATURES = [
@@ -16,9 +18,7 @@ export function AuthPage({ mode }: { mode: "sign-in" | "sign-up" }) {
         <div className="auth-glow" aria-hidden="true" />
 
         <div className="relative flex items-center gap-3">
-          <div className="brand-logo-frame !border-white/15 !bg-[#232323] !p-0">
-            <img src="/a-group-logo.png" alt="" className="h-full w-full object-contain" />
-          </div>
+          <BrandMark size={48} className="text-white" />
           <div>
             <p className="font-display text-sm font-bold tracking-[0.2em] text-white/70">A-GROUP</p>
             <p className="font-display text-lg font-bold">Financial Overview</p>

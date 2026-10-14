@@ -1,7 +1,11 @@
 // API response shapes shared by the worker and the React app.
 import type { Permission, Role } from "./permissions";
 
-export type Period = "monthly" | "weekly";
+/** Date filter presets; "custom" uses explicit from/to dates. */
+export type Period = "day" | "week" | "month" | "quarter" | "half" | "custom";
+/** Granularity of the trend charts. */
+export type BucketUnit = "day" | "week" | "month" | "quarter" | "half";
+export type PaymentMethod = "CASH" | "LOCAL_BANK_CARD" | "INTERNATIONAL_CARD";
 export type Currency = "LYD" | "USD";
 export type SubscriptionStatus = "PENDING" | "ACTIVE" | "CANCELLED" | "EXPIRED";
 
@@ -19,7 +23,7 @@ export type CurrentUser = {
 export type PeriodRange = {
   from: string; // ISO timestamp (inclusive)
   to: string; // ISO timestamp (exclusive)
-  label: string; // e.g. "October 2026" or "Week of 12 Oct"
+  label: string; // e.g. "1–14 Oct 2026"
 };
 
 export type SubscriptionCounts = {
@@ -29,14 +33,30 @@ export type SubscriptionCounts = {
 
 export type FinancePeriod = {
   paymentsReceived: MoneyByCurrency;
+  paymentsCount: number;
   expenses: MoneyByCurrency;
   netProfit: MoneyByCurrency;
 };
 
-export type ProfitHistoryPoint = {
+export type HistoryPoint = {
+  key: string; // bucket start date, YYYY-MM-DD
+  label: string; // short axis label, e.g. "Oct" or "12 Oct"
+  newSubscriptions: number;
+};
+
+export type FinanceHistoryPoint = {
   key: string;
   label: string;
+  revenue: MoneyByCurrency;
+  expenses: MoneyByCurrency;
   netProfit: MoneyByCurrency;
+};
+
+export type BreakdownItem = {
+  id: string;
+  label: string;
+  amount: MoneyByCurrency;
+  count: number;
 };
 
 export type RecentSubscription = {
@@ -54,12 +74,21 @@ export type RecentSubscription = {
 export type DashboardSummary = {
   period: Period;
   generatedAt: string;
-  range: { current: PeriodRange; previous: PeriodRange };
+  /** e.g. "October 2026", "Q4 2026", "Custom range" */
+  title: string;
+  bucketUnit: BucketUnit;
+  range: {
+    current: PeriodRange;
+    previous: PeriodRange;
+    /** the current range ends now (period still running) */
+    isToDate: boolean;
+  };
   subscriptions: {
     current: SubscriptionCounts;
     previous: SubscriptionCounts;
     change: { newSubscriptions: number | null; paidSubscriptions: number | null };
     statusBreakdown: Record<SubscriptionStatus, number>;
+    history: HistoryPoint[];
   };
   recentSubscriptions: RecentSubscription[];
   /** null when the viewer lacks the finance:view permission */
@@ -69,11 +98,33 @@ export type DashboardSummary = {
     change: {
       paymentsLYD: number | null;
       paymentsUSD: number | null;
+      expensesLYD: number | null;
+      expensesUSD: number | null;
       profitLYD: number | null;
       profitUSD: number | null;
     };
-    history: ProfitHistoryPoint[];
-    outstandingPayables: MoneyByCurrency;
+    history: FinanceHistoryPoint[];
+    breakdown: {
+      /** revenue in the current range by payment method */
+      byMethod: BreakdownItem[];
+      /** revenue in the current range by plan */
+      byPlan: BreakdownItem[];
+    };
+    /** money owed in both directions, as of now (not filtered by period) */
+    obligations: {
+      /** bills A-Group still owes suppliers */
+      payables: { total: MoneyByCurrency; paid: MoneyByCurrency; remaining: MoneyByCurrency; count: number };
+      /** customers who signed up but have not paid yet */
+      receivables: { remaining: MoneyByCurrency; count: number };
+    };
+    /** what should move between now and the end of the current month */
+    dueByMonthEnd: {
+      label: string; // e.g. "31 Oct"
+      renewals: { amount: MoneyByCurrency; count: number };
+      bills: { amount: MoneyByCurrency; count: number };
+    };
+    /** all successful payments ever received */
+    lifetimePaid: MoneyByCurrency;
   };
 };
 

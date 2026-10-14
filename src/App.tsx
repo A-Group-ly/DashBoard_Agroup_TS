@@ -1,5 +1,5 @@
 import { useAuth } from "@clerk/react";
-import { useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { LoaderCircle } from "lucide-react";
 
 import type { CurrentUser } from "../shared/types";
@@ -11,9 +11,11 @@ import { useTheme, type Theme } from "./lib/theme";
 import { AccessProblemPage } from "./pages/AccessProblemPage";
 import { AuthPage } from "./pages/AuthPage";
 import { DashboardPage } from "./pages/DashboardPage";
-import { TeamPage } from "./pages/TeamPage";
 
 const AUTH_ROUTES = ["/sign-in", "/sign-up"];
+
+// Only Super admins open this page, so it is downloaded on demand.
+const TeamPage = lazy(() => import("./pages/TeamPage").then((module) => ({ default: module.TeamPage })));
 
 export default function App() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -96,7 +98,19 @@ function SignedInApp({
 
   return (
     <AppShell user={user} page={page} theme={theme} toggleTheme={toggleTheme}>
-      {page === "team" ? <TeamPage currentUser={user} /> : <DashboardPage user={user} />}
+      {page === "team" ? (
+        <Suspense
+          fallback={
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <LoaderCircle size={16} className="animate-spin" /> Loading team...
+            </div>
+          }
+        >
+          <TeamPage currentUser={user} />
+        </Suspense>
+      ) : (
+        <DashboardPage user={user} />
+      )}
     </AppShell>
   );
 }

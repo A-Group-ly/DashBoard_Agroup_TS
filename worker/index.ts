@@ -4,12 +4,12 @@
 //   everything  -> the React app built by Vite (served from static assets)
 
 import { can, type Permission } from "../shared/permissions";
-import type { Period } from "../shared/types";
 import { authenticate } from "./auth";
-import { getDashboardSummary } from "./dashboard";
+import { buildSummary, loadSummaryData } from "./dashboard";
 import { createSql } from "./db";
 import type { Env, WorkerContext } from "./env";
 import { HttpError, errorResponse, json, readJson } from "./http";
+import { localNow, parsePeriod, resolvePeriod } from "./periods";
 import { listTeam, resolveCurrentUser, updateTeamMember } from "./users";
 
 const DEFAULT_TIME_ZONE = "Africa/Tripoli";
@@ -49,28 +49,39 @@ async function handleApi(
   // Everything below requires a valid Clerk session.
   const claims = await authenticate(request, env);
   const sql = createSql(env.DATABASE_URL);
+  const need = (permission: Permission, role: Parameters<typeof can>[0]) =>
+    requirePermission(role, permission);
+
+  if (pathname === "/api/dashboard/summary" && method === "GET") {
+    // Validate the filter first, then load the user's role and the figures
+    // in parallel: one round trip to Neon instead of two in a row. Figures
+    // the role may not see are removed before anything is sent.
+    const timeZone = env.COMPANY_TIME_ZONE || DEFAULT_TIME_ZONE;
+    const resolved = resolvePeriod(parsePeriod(url.searchParams.get("period")), localNow(timeZone), {
+      from: url.searchParams.get("from"),
+      to: url.searchParams.get("to"),
+    });
+    const dataPromise = loadSummaryData(sql, resolved, timeZone);
+    dataPromise.catch(() => undefined); // handled below; avoid an unhandled rejection
+    const user = await resolveCurrentUser(sql, env, ctx, claims);
+    need("dashboard:view", user.role);
+    return json(buildSummary(await dataPromise, resolved, user));
+  }
+
   const user = await resolveCurrentUser(sql, env, ctx, claims);
-  const need = (permission: Permission) => requirePermission(user.role, permission);
 
   if (pathname === "/api/me" && method === "GET") {
     return json(user);
   }
 
-  if (pathname === "/api/dashboard/summary" && method === "GET") {
-    need("dashboard:view");
-    const period = parsePeriod(url.searchParams.get("period"));
-    const timeZone = env.COMPANY_TIME_ZONE || DEFAULT_TIME_ZONE;
-    return json(await getDashboardSummary(sql, user, period, timeZone));
-  }
-
   if (pathname === "/api/team" && method === "GET") {
-    need("team:manage");
+    need("team:manage", user.role);
     return json(await listTeam(sql));
   }
 
   const teamMatch = /^\/api\/team\/([^/]+)$/.exec(pathname);
   if (teamMatch && method === "PATCH") {
-    need("team:manage");
+    need("team:manage", user.role);
     return json(
       await updateTeamMember(sql, env, user, decodeURIComponent(teamMatch[1]), await readJson(request)),
     );
@@ -83,10 +94,4 @@ function requirePermission(role: Parameters<typeof can>[0], permission: Permissi
   if (!can(role, permission)) {
     throw new HttpError(403, "forbidden", "Your role does not allow this action.");
   }
-}
-
-function parsePeriod(value: string | null): Period {
-  if (value === null || value === "monthly") return "monthly";
-  if (value === "weekly") return "weekly";
-  throw new HttpError(400, "bad_request", "period must be monthly or weekly");
 }

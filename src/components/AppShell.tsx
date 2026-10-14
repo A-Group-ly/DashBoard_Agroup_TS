@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
-import { UserButton } from "@clerk/react";
 import { LayoutDashboard, Moon, Sun, Users } from "lucide-react";
 
-import { ROLE_LABELS, can } from "../../shared/permissions";
+import { can } from "../../shared/permissions";
 import type { CurrentUser } from "../../shared/types";
 import { navigate } from "../lib/router";
+import { AccountMenu } from "./AccountMenu";
+import { BrandMark } from "./BrandMark";
 import type { Theme } from "../lib/theme";
 
 type Page = "overview" | "team";
@@ -45,9 +46,7 @@ export function AppShell({
             }}
             className="flex min-w-0 items-center gap-3"
           >
-            <div className="brand-logo-frame !h-11 !w-11 sm:!h-[52px] sm:!w-[52px]">
-              <img src="/a-group-logo.png" alt="A-Group" className="h-full w-full object-contain" />
-            </div>
+            <BrandMark size={40} className="text-slate-900 sm:!h-12 sm:!w-12" />
             <div className="min-w-0">
               <p className="font-display text-[11px] font-bold tracking-[0.18em] text-slate-600 sm:text-xs">
                 A-GROUP
@@ -67,25 +66,17 @@ export function AppShell({
               </nav>
             )}
 
-            <span
-              className="hidden rounded-full border border-slate-300 bg-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 sm:inline-block"
-              title={`Signed in as ${user.email}`}
-            >
-              {ROLE_LABELS[user.role]}
-            </span>
-
             <button
               type="button"
               onClick={toggleTheme}
               aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-300 bg-slate-200 text-slate-800 transition hover:bg-slate-300"
+              title={theme === "dark" ? "Light mode" : "Dark mode"}
+              className="hidden h-10 w-10 items-center justify-center rounded-xl border border-slate-300 bg-slate-200 text-slate-800 hover:border-slate-400 hover:bg-slate-300 sm:flex"
             >
               <ThemeIcon size={18} />
             </button>
 
-            <div className="flex h-10 w-10 items-center justify-center">
-              <UserButton />
-            </div>
+            <AccountMenu user={user} theme={theme} toggleTheme={toggleTheme} />
           </div>
         </div>
 
@@ -103,9 +94,7 @@ export function AppShell({
 
         <footer className="mt-8 flex flex-col justify-between gap-2 border-t border-slate-300 py-5 text-xs text-slate-600 sm:flex-row">
           <span>A-Group · Financial Dashboard</span>
-          <span>
-            Signed in as {user.email} · {ROLE_LABELS[user.role]}
-          </span>
+          <span>Signed in as {user.email}</span>
         </footer>
       </main>
     </div>

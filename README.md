@@ -12,19 +12,37 @@ The A-Group dashboard brings subscription activity and financial summaries into 
 | --- | --- |
 | ![Sign-in page](docs/screenshots/sign-in.png) | ![Dashboard](docs/screenshots/dashboard.png) |
 
+| Charts (revenue mix) | Account menu with role | Custom date range |
+| --- | --- | --- |
+| ![Pie charts](docs/screenshots/charts-mix.png) | ![Account menu](docs/screenshots/account-menu.png) | ![Custom range](docs/screenshots/custom-range.png) |
+
 | Mobile layout | Support view | Team and roles |
 | --- | --- | --- |
 | ![Mobile dashboard](docs/screenshots/mobile.png) | ![Support role with financial figures hidden](docs/screenshots/support-role.png) | ![Team and roles page](docs/screenshots/team.png) |
 
 ## What it includes
 
-- Weekly and monthly financial summaries.
+- **Financial overview first:** total paid, net profit/loss, outstanding debts (with how much is already paid), what customers still owe, and what is due by the end of the current month.
+- **Date filters:** daily, weekly, monthly, quarterly, semiannual, and any custom date range.
+- **Fair comparisons:** every range is compared with the equivalent previous period. A period that is still running is compared to the same point last time (1–14 Oct vs 1–14 Sep); a custom range is compared with the same number of days just before it.
+- **Charts section** with tabs: revenue vs expenses (line), net profit (bar), revenue by payment method and by plan (pie), and subscriptions (bar + pie). Every chart has hover tooltips and works in both themes.
 - Subscription, payment, expense, profit/loss, and payable figures from PostgreSQL.
 - Separate LYD and USD totals; currencies are not added together.
 - Light and dark themes, plus a layout that adapts to phone screens.
 - Clerk sign-in and server-side checks for protected API routes.
 - Three roles: **Super Admin**, **Finance**, and **Support**.
 - A team page where Super Admins can change roles or disable access.
+- The account menu (top right) shows your name, email and role as information, plus account settings, theme and sign out.
+
+## Performance
+
+- One SQL query per dashboard load (one round trip to Neon), started in parallel with the role check.
+- No re-render every second: the old live clock and countdown were replaced by a timer that refreshes once a minute, and pauses while the browser tab is hidden.
+- Results are cached per filter, so switching back to a range you already opened is instant.
+- The Team page is loaded only when a Super admin opens it.
+- Brand fonts were subset to Latin WOFF: about 110 KB instead of about 960 KB.
+- Hand-written SVG charts, so no chart library is downloaded.
+- `public/_headers` lets browsers cache hashed assets and fonts for a year.
 
 ## Roles
 
