@@ -139,3 +139,47 @@ export type TeamMember = {
 };
 
 export type ApiError = { error: string; message: string };
+
+/**
+ * TV / wallboard view. Aggregates only: it never carries customer names,
+ * emails, phone numbers, invoice ids or individual transactions, because it
+ * is shown on shared screens.
+ */
+export type WallboardSummary = {
+  generatedAt: string;
+  timeZone: string;
+  /** true while the database still holds the sample (demo-*) records */
+  demoData: boolean;
+  /** e.g. "October 2026" */
+  monthTitle: string;
+  range: { current: string; previous: string };
+  /** ISO timestamps (end exclusive) so screens can format dates in any language */
+  rangeIso: { current: { from: string; to: string }; previous: { from: string; to: string } };
+  subscriptions: {
+    active: number;
+    pending: number;
+    cancelled: number;
+    expired: number;
+    /** companies with at least one subscription */
+    customers: number;
+    newThisMonth: number;
+    newChange: number | null;
+    /** card payments that failed in the last 30 days */
+    failedPayments30d: number;
+    renewalsNext7Days: { total: number; byDay: { date: string; count: number }[] };
+    /** new subscriptions per month, oldest first */
+    newHistory: { key: string; label: string; value: number }[];
+  };
+  /** null when the viewer's role cannot see money */
+  finance: null | {
+    collected: MoneyByCurrency;
+    collectedChange: { LYD: number | null; USD: number | null };
+    /** monthly recurring revenue: active monthly plans + yearly plans / 12 */
+    mrr: MoneyByCurrency;
+    receivables: { amount: MoneyByCurrency; count: number };
+    payables: { remaining: MoneyByCurrency; count: number };
+    dueByMonthEnd: { label: string; renewals: MoneyByCurrency; bills: MoneyByCurrency; billsCount: number };
+    /** payments received and expenses per month, oldest first */
+    history: { key: string; label: string; revenue: MoneyByCurrency; expenses: MoneyByCurrency }[];
+  };
+};

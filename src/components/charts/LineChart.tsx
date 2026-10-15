@@ -14,11 +14,19 @@ export const LineChart = memo(function LineChart({
   series,
   format,
   ariaLabel,
+  height: fixedHeight,
+  textSize = 11,
+  showLegend = true,
 }: {
   labels: string[];
   series: LineSeries[];
   format: (value: number) => string;
   ariaLabel: string;
+  /** Fixed chart height in px (TV mode); defaults to 240/300. */
+  height?: number;
+  /** Axis label size in px; margins grow with it (TV mode uses ~18-26). */
+  textSize?: number;
+  showLegend?: boolean;
 }) {
   const { ref, width } = useChartWidth();
   const [active, setActive] = useState<number | null>(null);
@@ -34,17 +42,18 @@ export const LineChart = memo(function LineChart({
 
   const { low, high, ticks } = niceScale(Math.min(...all), Math.max(...all));
   const compact = width < 520;
-  const height = compact ? 240 : 300;
-  const left = compact ? 40 : 52;
+  const k = textSize / 11;
+  const height = fixedHeight ?? (compact ? 240 : 300);
+  const left = Math.round((compact ? 40 : 52) * k);
   const right = 24;
   const top = 12;
-  const bottom = 30;
+  const bottom = Math.round(30 * k);
   const plotWidth = width - left - right;
   const plotHeight = height - top - bottom;
   const step = labels.length > 1 ? plotWidth / (labels.length - 1) : 0;
   const xAt = (index: number) => left + (labels.length > 1 ? index * step : plotWidth / 2);
   const yAt = (value: number) => top + ((high - value) / (high - low)) * plotHeight;
-  const stride = labelStride(step || plotWidth, compact ? 40 : 48);
+  const stride = labelStride(step || plotWidth, (compact ? 40 : 48) * k);
 
   const pathFor = (values: number[]) =>
     values.map((value, index) => `${index === 0 ? "M" : "L"}${xAt(index).toFixed(1)},${yAt(value).toFixed(1)}`).join(" ");
@@ -88,7 +97,7 @@ export const LineChart = memo(function LineChart({
                 stroke="var(--chart-grid)"
                 strokeDasharray={tick === 0 ? undefined : "3 5"}
               />
-              <text x={left - 8} y={yAt(tick) + 4} textAnchor="end" fontSize="11" fill="var(--chart-ink)">
+              <text x={left - 8} y={yAt(tick) + textSize * 0.35} textAnchor="end" fontSize={textSize} fill="var(--chart-ink)">
                 {compactNumber(tick)}
               </text>
             </g>
@@ -99,9 +108,9 @@ export const LineChart = memo(function LineChart({
               <text
                 key={label + index}
                 x={xAt(index)}
-                y={height - 8}
+                y={height - Math.round(8 * k)}
                 textAnchor="middle"
-                fontSize="11"
+                fontSize={textSize}
                 fontWeight={index === active ? 700 : 400}
                 fill="var(--chart-ink)"
               >
@@ -123,12 +132,12 @@ export const LineChart = memo(function LineChart({
 
           {series.map((item) => (
             <g key={item.id}>
-              <path d={pathFor(item.values)} fill="none" stroke={item.color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+              <path d={pathFor(item.values)} fill="none" stroke={item.color} strokeWidth={Math.max(2, Math.round(textSize / 6))} strokeLinejoin="round" strokeLinecap="round" />
               {active !== null && (
                 <circle
                   cx={xAt(active)}
                   cy={yAt(item.values[active])}
-                  r="5"
+                  r={Math.max(5, Math.round(textSize / 3))}
                   fill={item.color}
                   stroke="var(--chart-surface)"
                   strokeWidth="2"
@@ -138,9 +147,9 @@ export const LineChart = memo(function LineChart({
           ))}
         </svg>
       </div>
-      <div className="mt-3">
+      {showLegend && (<div className="mt-3">
         <Legend items={series.map((item) => ({ label: item.label, color: item.color, shape: "line" }))} />
-      </div>
+      </div>)}
     </div>
   );
 });

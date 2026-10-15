@@ -1,0 +1,594 @@
+/* TV / wallboard mode.
+   Executive monochrome: black canvas, white type, neutral greys, thin rules,
+   one burnt-orange accent, yellow only for warnings. Sizes scale with the
+   viewport width so the same layout reads well at 1366, 1920 and 3840 px. */
+
+.tv-root {
+  --tv-bg: #0a0a0a;
+  --tv-surface: #111111;
+  --tv-rule: #2b2b2b;
+  --tv-ink: #f5f5f5;
+  --tv-muted: #a3a3a3;
+  --tv-faint: #737373;
+  --tv-accent: #d95926;
+  --tv-warn: #facc15;
+  --tv-good: #4ade80;
+  --tv-gap: clamp(12px, 1.25vw, 48px);
+  --tv-text: clamp(14px, 0.95vw, 36px);
+
+  /* Charts inside TV mode use the TV palette */
+  --chart-grid: #2b2b2b;
+  --chart-axis: #737373;
+  --chart-ink: #a3a3a3;
+  --chart-surface: #0a0a0a;
+
+  display: grid;
+  grid-template-rows: auto 1fr;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--tv-bg) !important;
+  color: var(--tv-ink) !important;
+  font-size: var(--tv-text);
+  line-height: 1.3;
+}
+
+.tv-cursor-hidden,
+.tv-cursor-hidden * {
+  cursor: none !important;
+}
+
+/* ---- Header ------------------------------------------------------------ */
+
+.tv-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--tv-gap);
+  padding: calc(var(--tv-gap) * 0.9) calc(var(--tv-gap) * 1.6);
+  border-bottom: 1px solid var(--tv-rule);
+}
+
+.tv-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.9em;
+  min-width: 0;
+}
+
+.tv-brand-mark {
+  width: 2.6em !important;
+  height: 2.6em !important;
+  color: var(--tv-ink);
+}
+
+.tv-eyebrow {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.72em;
+  letter-spacing: 0.22em;
+  color: var(--tv-muted);
+}
+
+.tv-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.55em;
+  line-height: 1.1;
+}
+
+.tv-demo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  margin-inline-start: 0.6em;
+  padding: 0.25em 0.6em;
+  border: 1px solid var(--tv-warn);
+  color: var(--tv-warn);
+  font-size: 0.72em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tv-demo svg,
+.tv-status svg,
+.tv-control svg,
+.tv-kpi-label svg,
+.tv-alert svg,
+.tv-ok svg {
+  width: 1.1em;
+  height: 1.1em;
+  flex-shrink: 0;
+}
+
+.tv-clock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.tv-clock-time {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 2.3em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.tv-clock-date {
+  margin-top: 0.3em;
+  font-size: 0.85em;
+  color: var(--tv-muted);
+}
+
+.tv-header-end {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5em;
+  min-width: 0;
+}
+
+.tv-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  font-size: 0.85em;
+  font-weight: 600;
+  text-align: end;
+}
+
+.tv-status-ok {
+  color: var(--tv-muted);
+}
+
+.tv-status-ok svg {
+  color: var(--tv-good);
+}
+
+.tv-status-warn {
+  color: var(--tv-warn);
+}
+
+.tv-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.4em;
+}
+
+.tv-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.35em 0.7em;
+  border: 1px solid var(--tv-rule);
+  background: transparent;
+  color: var(--tv-muted);
+  font-size: 0.72em;
+  font-weight: 600;
+  transition: color 150ms, border-color 150ms, background-color 150ms;
+}
+
+.tv-control:hover {
+  border-color: var(--tv-muted);
+  color: var(--tv-ink);
+}
+
+.tv-control:focus-visible,
+.tv-dots button:focus-visible {
+  outline: 2px solid var(--tv-ink) !important;
+  outline-offset: 2px;
+}
+
+.tv-hint {
+  font-size: 0.72em;
+  color: var(--tv-warn);
+}
+
+/* ---- Body ---------------------------------------------------------------- */
+
+.tv-main {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: var(--tv-gap);
+  min-height: 0;
+  padding: var(--tv-gap) calc(var(--tv-gap) * 1.6) calc(var(--tv-gap) * 1.2);
+}
+
+.tv-range {
+  font-size: 0.9em;
+  color: var(--tv-muted);
+}
+
+.tv-range strong {
+  color: var(--tv-ink);
+  font-family: var(--font-display);
+}
+
+.tv-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10em, 1fr));
+  border-top: 1px solid var(--tv-rule);
+  border-bottom: 1px solid var(--tv-rule);
+}
+
+.tv-kpi {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0.9em 1.1em 1em;
+  border-inline-start: 1px solid var(--tv-rule);
+}
+
+.tv-kpi:first-child {
+  border-inline-start: 0;
+  padding-inline-start: 0;
+}
+
+.tv-kpi-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  font-size: 0.78em;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--tv-muted);
+}
+
+.tv-kpi-value {
+  display: flex;
+  flex-direction: column;
+  margin-top: 0.35em;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 2.9em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.tv-money {
+  white-space: nowrap;
+}
+
+.tv-currency {
+  margin-inline-start: 0.25em;
+  font-size: 0.4em;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--tv-muted);
+}
+
+.tv-money-secondary {
+  margin-top: 0.35em;
+  font-family: var(--font-sans);
+  font-size: 0.32em;
+  font-weight: 600;
+  color: var(--tv-muted);
+}
+
+.tv-money-secondary span {
+  font-size: 0.85em;
+}
+
+.tv-kpi-footer {
+  margin-top: auto;
+  padding-top: 0.6em;
+  font-size: 0.75em;
+  color: var(--tv-faint);
+}
+
+.tv-kpi-warn .tv-kpi-label,
+.tv-kpi-warn .tv-kpi-value {
+  color: var(--tv-warn);
+}
+
+.tv-up {
+  color: var(--tv-good);
+}
+
+.tv-down {
+  color: var(--tv-accent);
+}
+
+.tv-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2.1fr) minmax(0, 1fr);
+  gap: var(--tv-gap);
+  min-height: 0;
+}
+
+.tv-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding-top: 0.8em;
+  border-top: 2px solid var(--tv-ink);
+}
+
+.tv-panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5em 1.4em;
+  margin-bottom: 0.6em;
+}
+
+.tv-panel-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05em;
+}
+
+.tv-legend {
+  display: flex;
+  gap: 1.2em;
+  font-size: 0.8em;
+  color: var(--tv-muted);
+}
+
+.tv-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+}
+
+.tv-legend i {
+  display: inline-block;
+  width: 1.4em;
+  height: 3px;
+}
+
+.tv-dots {
+  display: flex;
+  gap: 0.4em;
+  margin-inline-start: auto;
+}
+
+.tv-dots button {
+  width: 1.6em;
+  height: 0.3em;
+  padding: 0;
+  border: 0;
+  background: var(--tv-rule);
+  transition: background-color 200ms;
+}
+
+.tv-dots button.is-active {
+  background: var(--tv-accent);
+}
+
+.tv-chart-area {
+  position: relative;
+  flex: 1;
+  min-height: 12em;
+}
+
+.tv-slide {
+  position: absolute;
+  inset: 0;
+  animation: tv-fade 400ms ease-out;
+}
+
+@keyframes tv-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.tv-donut {
+  display: flex;
+  height: 100%;
+  align-items: center;
+}
+
+.tv-donut ul {
+  max-width: 34em !important;
+  font-size: calc(var(--tv-text) * 1.15);
+}
+
+.tv-donut ul * {
+  font-size: inherit !important;
+}
+
+.tv-donut li {
+  padding-block: 0.45em !important;
+}
+
+.tv-donut li span span:last-child {
+  color: var(--tv-muted);
+}
+
+.tv-side {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: var(--tv-gap);
+  min-height: 0;
+}
+
+.tv-alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+}
+
+.tv-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6em;
+  font-size: 0.92em;
+}
+
+.tv-alert svg {
+  margin-top: 0.15em;
+}
+
+.tv-alert-warn {
+  color: var(--tv-warn);
+}
+
+.tv-alert-info {
+  color: var(--tv-ink);
+}
+
+.tv-alert-info svg {
+  color: var(--tv-muted);
+}
+
+.tv-ok {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  color: var(--tv-muted);
+}
+
+.tv-ok svg {
+  color: var(--tv-good);
+}
+
+.tv-due {
+  display: grid;
+  gap: 0.6em;
+  margin-top: 1em;
+  padding-top: 0.8em;
+  border-top: 1px solid var(--tv-rule);
+}
+
+.tv-due dt {
+  font-size: 0.75em;
+  color: var(--tv-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tv-due dd {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05em;
+}
+
+.tv-money-inline {
+  white-space: nowrap;
+}
+
+.tv-week {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45em;
+}
+
+.tv-week li {
+  display: grid;
+  grid-template-columns: 5.5em 1fr 2em;
+  align-items: center;
+  gap: 0.8em;
+  font-size: 0.9em;
+}
+
+.tv-week-day {
+  color: var(--tv-muted);
+}
+
+.tv-week li:first-child .tv-week-day {
+  color: var(--tv-ink);
+  font-weight: 600;
+}
+
+.tv-week-bar {
+  height: 0.55em;
+  background: var(--tv-surface);
+}
+
+.tv-week-bar i {
+  display: block;
+  height: 100%;
+  background: var(--tv-ink);
+}
+
+.tv-week-count {
+  text-align: end;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.tv-note {
+  font-size: 0.8em;
+  color: var(--tv-faint);
+}
+
+.tv-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8em;
+  color: var(--tv-muted);
+}
+
+.tv-empty svg {
+  width: 2.5em;
+  height: 2.5em;
+}
+
+/* Charts reused from the dashboard: neutralise card styling in TV mode */
+.tv-root .hover-row:hover {
+  background: transparent;
+}
+
+/* ---- Smaller screens: allow scrolling instead of squeezing -------------- */
+
+@media (max-width: 1100px), (max-height: 680px) {
+  .tv-root {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+    --tv-text: 15px;
+  }
+
+  .tv-header {
+    grid-template-columns: 1fr auto;
+  }
+
+  .tv-clock {
+    display: none;
+  }
+
+  .tv-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tv-chart-area {
+    min-height: 320px;
+  }
+
+  .tv-kpi:nth-child(odd) {
+    border-inline-start: 0;
+    padding-inline-start: 0;
+  }
+
+  .tv-kpis {
+    grid-template-columns: repeat(auto-fit, minmax(9em, 1fr));
+  }
+
+  .tv-kpi-value {
+    font-size: 2em;
+  }
+
+  .tv-money {
+    white-space: normal;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tv-slide {
+    animation: none;
+  }
+}
