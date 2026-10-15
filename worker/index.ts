@@ -1,6 +1,6 @@
 // Cloudflare Worker entry point.
 //
-//   /api/*      -> JSON API (every route except /api/health needs a Clerk session)
+//   /api/*      -> JSON API (every route except /api/health and /api/config needs a Clerk session)
 //   everything  -> the React app built by Vite (served from static assets)
 
 import { can, type Permission } from "../shared/permissions";
@@ -40,6 +40,16 @@ async function handleApi(
   const method = request.method.toUpperCase();
 
   // Public: lets CI and uptime checks confirm the worker and database are up.
+  // Public: the browser reads the Clerk publishable key from here at start-up,
+  // so the build (and CI) never needs it. A publishable key is meant to be
+  // public; the secret key never leaves the worker.
+  if (pathname === "/api/config" && method === "GET") {
+    if (!env.CLERK_PUBLISHABLE_KEY) {
+      throw new HttpError(500, "config_error", "CLERK_PUBLISHABLE_KEY is not configured.");
+    }
+    return json({ clerkPublishableKey: env.CLERK_PUBLISHABLE_KEY.trim() });
+  }
+
   if (pathname === "/api/health" && method === "GET") {
     const sql = createSql(env.DATABASE_URL);
     await sql("SELECT 1");

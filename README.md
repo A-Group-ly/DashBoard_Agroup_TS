@@ -117,7 +117,22 @@ The sample records are intended for development and demos only.
 3. Run `npm run deploy`.
 4. Add the deployed domain to the Clerk application's allowed domains/settings as required.
 
-For automated deployments, configure the repository secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, and `VITE_CLERK_PUBLISHABLE_KEY`, plus the `PRODUCTION_URL` repository variable. The workflow in `.github/workflows/ci-cd.yml` runs checks on pull requests and is configured to deploy `main` when the required secrets are available.
+### Automatic deployment (GitHub Actions)
+
+Every pull request runs typecheck, lint, unit tests and a build. Every push to `main` (or **Actions → CI / CD → Run workflow**) runs the same checks, then:
+
+1. **Checks the Cloudflare credentials** and stops with a plain-English error if the token is invalid, belongs to another account, or lacks the Workers permission. Stray spaces or line breaks in pasted secrets are removed automatically.
+2. Deploys with `wrangler deploy`.
+3. Smoke-tests the live site: `/api/health` must be up, `/api/config` must return the Clerk key, and `/api/me` must refuse anonymous visitors (401).
+
+Only two repository secrets are needed:
+
+| Secret | Where to get it |
+| --- | --- |
+| `CLOUDFLARE_API_TOKEN` | Cloudflare → My Profile → API Tokens → Create Token → template **Edit Cloudflare Workers** |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare → Workers & Pages → Account ID (32 characters) |
+
+The Clerk publishable key is **not** needed in GitHub: the page reads it at start-up from the worker (`/api/config`), which already has `CLERK_PUBLISHABLE_KEY` as a secret. Optionally set a `PRODUCTION_URL` repository variable if the site address changes.
 
 ## Security
 
