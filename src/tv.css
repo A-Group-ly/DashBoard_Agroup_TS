@@ -4,23 +4,25 @@
    viewport width so the same layout reads well at 1366, 1920 and 3840 px. */
 
 .tv-root {
-  --tv-bg: #0a0a0a;
-  --tv-surface: #111111;
-  --tv-rule: #2b2b2b;
-  --tv-ink: #f5f5f5;
-  --tv-muted: #a3a3a3;
-  --tv-faint: #737373;
-  --tv-accent: #d95926;
-  --tv-warn: #facc15;
-  --tv-good: #4ade80;
-  --tv-gap: clamp(12px, 1.25vw, 48px);
+  /* Light theme: the dashboard's slate surfaces */
+  --tv-bg: #f1f3f5;
+  --tv-card: #f1f5f9; /* slate-100 */
+  --tv-card-2: #e2e8f0; /* slate-200 */
+  --tv-card-accent: #cbd5e1; /* slate-300, like the dashboard's highlighted card */
+  --tv-rule: #cbd5e1;
+  --tv-rule-strong: #94a3b8;
+  --tv-ink: #0f172a;
+  --tv-muted: #475569;
+  --tv-faint: #64748b;
+  --tv-warn: #b45309;
+  --tv-warn-bg: #fef3c7;
+  --tv-warn-rule: #fcd34d;
+  --tv-good: #047857;
+  --tv-bad: #be123c;
+  --tv-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --tv-gap: clamp(12px, 1.1vw, 44px);
+  --tv-radius: clamp(12px, 0.9vw, 32px);
   --tv-text: clamp(14px, 0.95vw, 36px);
-
-  /* Charts inside TV mode use the TV palette */
-  --chart-grid: #2b2b2b;
-  --chart-axis: #737373;
-  --chart-ink: #a3a3a3;
-  --chart-surface: #0a0a0a;
 
   display: grid;
   grid-template-rows: auto 1fr;
@@ -31,6 +33,25 @@
   color: var(--tv-ink) !important;
   font-size: var(--tv-text);
   line-height: 1.3;
+}
+
+/* Dark theme: the dashboard's charcoal surfaces */
+.tv-root[data-theme="dark"] {
+  --tv-bg: #090909;
+  --tv-card: #151515;
+  --tv-card-2: #1d1d1d;
+  --tv-card-accent: #272727;
+  --tv-rule: #383838;
+  --tv-rule-strong: #5a5a5a;
+  --tv-ink: #f2f2f2;
+  --tv-muted: #b0b0b0;
+  --tv-faint: #999999;
+  --tv-warn: #fbbf24;
+  --tv-warn-bg: #2a2412;
+  --tv-warn-rule: #4a3f1c;
+  --tv-good: #4ade80;
+  --tv-bad: #fb7185;
+  --tv-shadow: none;
 }
 
 .tv-cursor-hidden,
@@ -47,6 +68,7 @@
   gap: var(--tv-gap);
   padding: calc(var(--tv-gap) * 0.9) calc(var(--tv-gap) * 1.6);
   border-bottom: 1px solid var(--tv-rule);
+  background: var(--tv-card);
 }
 
 .tv-brand {
@@ -82,8 +104,10 @@
   align-items: center;
   gap: 0.35em;
   margin-inline-start: 0.6em;
-  padding: 0.25em 0.6em;
-  border: 1px solid var(--tv-warn);
+  padding: 0.25em 0.7em;
+  border: 1px solid var(--tv-warn-rule);
+  border-radius: 999px;
+  background: var(--tv-warn-bg);
   color: var(--tv-warn);
   font-size: 0.72em;
   font-weight: 600;
@@ -136,7 +160,11 @@
   display: inline-flex;
   align-items: center;
   gap: 0.45em;
-  font-size: 0.85em;
+  padding: 0.3em 0.8em;
+  border: 1px solid var(--tv-rule);
+  border-radius: 999px;
+  background: var(--tv-card-2);
+  font-size: 0.8em;
   font-weight: 600;
   text-align: end;
 }
@@ -150,6 +178,8 @@
 }
 
 .tv-status-warn {
+  border-color: var(--tv-warn-rule);
+  background: var(--tv-warn-bg);
   color: var(--tv-warn);
 }
 
@@ -164,23 +194,31 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4em;
-  padding: 0.35em 0.7em;
+  height: 2.4em;
+  padding: 0 0.9em;
   border: 1px solid var(--tv-rule);
-  background: transparent;
-  color: var(--tv-muted);
-  font-size: 0.72em;
+  border-radius: 0.75em;
+  background: var(--tv-card-2);
+  color: var(--tv-ink);
+  font-size: 0.75em;
   font-weight: 600;
-  transition: color 150ms, border-color 150ms, background-color 150ms;
+  transition: color 150ms, border-color 150ms, background-color 150ms, transform 120ms;
 }
 
 .tv-control:hover {
-  border-color: var(--tv-muted);
-  color: var(--tv-ink);
+  border-color: var(--tv-rule-strong);
+  background: var(--tv-card-accent);
+}
+
+.tv-control-icon {
+  width: 2.4em;
+  padding: 0;
+  justify-content: center;
 }
 
 .tv-control:focus-visible,
 .tv-dots button:focus-visible {
-  outline: 2px solid var(--tv-ink) !important;
+  outline: 2px solid var(--tv-muted) !important;
   outline-offset: 2px;
 }
 
@@ -212,8 +250,7 @@
 .tv-kpis {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(10em, 1fr));
-  border-top: 1px solid var(--tv-rule);
-  border-bottom: 1px solid var(--tv-rule);
+  gap: calc(var(--tv-gap) * 0.8);
 }
 
 .tv-kpi {
@@ -221,12 +258,15 @@
   flex-direction: column;
   min-width: 0;
   padding: 0.9em 1.1em 1em;
-  border-inline-start: 1px solid var(--tv-rule);
+  border: 1px solid var(--tv-rule);
+  border-radius: var(--tv-radius);
+  background: var(--tv-card);
+  box-shadow: var(--tv-shadow);
 }
 
 .tv-kpi:first-child {
-  border-inline-start: 0;
-  padding-inline-start: 0;
+  border-color: var(--tv-rule-strong);
+  background: var(--tv-card-accent);
 }
 
 .tv-kpi-label {
@@ -283,6 +323,10 @@
   color: var(--tv-faint);
 }
 
+.tv-kpi-warn {
+  border-color: var(--tv-warn-rule);
+}
+
 .tv-kpi-warn .tv-kpi-label,
 .tv-kpi-warn .tv-kpi-value {
   color: var(--tv-warn);
@@ -293,7 +337,7 @@
 }
 
 .tv-down {
-  color: var(--tv-accent);
+  color: var(--tv-bad);
 }
 
 .tv-grid {
@@ -307,8 +351,11 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  padding-top: 0.8em;
-  border-top: 2px solid var(--tv-ink);
+  padding: 1em 1.2em;
+  border: 1px solid var(--tv-rule);
+  border-radius: var(--tv-radius);
+  background: var(--tv-card);
+  box-shadow: var(--tv-shadow);
 }
 
 .tv-panel-head {
@@ -342,6 +389,7 @@
   display: inline-block;
   width: 1.4em;
   height: 3px;
+  border-radius: 2px;
 }
 
 .tv-dots {
@@ -351,16 +399,18 @@
 }
 
 .tv-dots button {
-  width: 1.6em;
-  height: 0.3em;
+  width: 0.5em;
+  height: 0.5em;
   padding: 0;
   border: 0;
-  background: var(--tv-rule);
-  transition: background-color 200ms;
+  border-radius: 999px;
+  background: var(--tv-rule-strong);
+  transition: background-color 200ms, width 300ms;
 }
 
 .tv-dots button.is-active {
-  background: var(--tv-accent);
+  width: 1.6em;
+  background: var(--tv-ink);
 }
 
 .tv-chart-area {
@@ -435,6 +485,16 @@
   color: var(--tv-warn);
 }
 
+.tv-alert {
+  padding: 0.45em 0.6em;
+  border-radius: 0.6em;
+  background: var(--tv-card-2);
+}
+
+.tv-alert-warn {
+  background: var(--tv-warn-bg);
+}
+
 .tv-alert-info {
   color: var(--tv-ink);
 }
@@ -504,13 +564,16 @@
 
 .tv-week-bar {
   height: 0.55em;
-  background: var(--tv-surface);
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--tv-card-2);
 }
 
 .tv-week-bar i {
   display: block;
   height: 100%;
-  background: var(--tv-ink);
+  border-radius: 999px;
+  background: var(--chart-1);
 }
 
 .tv-week-count {
@@ -567,11 +630,6 @@
 
   .tv-chart-area {
     min-height: 320px;
-  }
-
-  .tv-kpi:nth-child(odd) {
-    border-inline-start: 0;
-    padding-inline-start: 0;
   }
 
   .tv-kpis {

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { LayoutDashboard, Moon, Sun, Users } from "lucide-react";
+import { LayoutDashboard, Moon, Sun, Tv, Users } from "lucide-react";
 
 import { can } from "../../shared/permissions";
 import type { CurrentUser } from "../../shared/types";
@@ -74,6 +74,16 @@ export function AppShell({
               className="hidden h-10 w-10 items-center justify-center rounded-xl border border-slate-300 bg-slate-200 text-slate-800 hover:border-slate-400 hover:bg-slate-300 sm:flex"
             >
               <ThemeIcon size={18} />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigate("/tv")}
+              aria-label="Open TV mode"
+              title="TV mode"
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-300 bg-slate-200 text-slate-800 hover:border-slate-400 hover:bg-slate-300"
+            >
+              <Tv size={18} />
             </button>
 
             <AccountMenu user={user} theme={theme} toggleTheme={toggleTheme} />
