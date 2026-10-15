@@ -48,7 +48,7 @@ The A-Group dashboard brings subscription activity and financial summaries into 
 
 ## TV mode (wallboard)
 
-A full-screen board for an office TV or shared monitor. Open it with the **TV mode** button on the dashboard, or go to `/tv`.
+A full-screen board for an office TV or shared monitor. Open it with the **TV icon** in the top bar (next to the light/dark button), or go to `/tv`. It follows the same light/dark theme and design as the dashboard, and has its own light/dark button.
 
 | English | Arabic (right-to-left) |
 | --- | --- |

@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { CircleCheck, Download, LoaderCircle, Lock, RefreshCw, TriangleAlert, Tv } from "lucide-react";
+import { CircleCheck, Download, LoaderCircle, Lock, RefreshCw, TriangleAlert } from "lucide-react";
 
 import { can } from "../../shared/permissions";
 import type { Currency, CurrentUser, DashboardSummary } from "../../shared/types";
@@ -8,7 +8,6 @@ import { ChartsSection } from "../components/charts/ChartsSection";
 import { FinanceOverview, SubscriptionKpis } from "../components/overview";
 import { PeriodPicker } from "../components/PeriodPicker";
 import { daysAgo, todayLocal } from "../lib/dates";
-import { navigate } from "../lib/router";
 import { COMPANY_TIME_ZONE } from "../lib/format";
 import { useDashboardSummary, type DashboardFilter } from "../lib/useDashboardSummary";
 
@@ -56,17 +55,6 @@ export function DashboardPage({ user }: { user: CurrentUser }) {
               ))}
             </div>
           )}
-
-          <button
-            type="button"
-            onClick={() => navigate("/tv")}
-            className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-slate-200 px-4 text-sm font-semibold text-slate-800 hover:border-slate-400 hover:bg-slate-300"
-            title="Show a full-screen wallboard for an office TV"
-          >
-            <Tv size={17} />
-            <span className="hidden sm:inline">TV mode</span>
-            <span className="sr-only sm:hidden">TV mode</span>
-          </button>
 
           {canExport && (
             <button

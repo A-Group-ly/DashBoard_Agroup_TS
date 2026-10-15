@@ -6,7 +6,9 @@ import {
   Info,
   Languages,
   LoaderCircle,
+  Moon,
   Shrink,
+  Sun,
   TriangleAlert,
   WifiOff,
   X,
@@ -20,6 +22,7 @@ import { DonutChart } from "../components/charts/DonutChart";
 import { LineChart } from "../components/charts/LineChart";
 import { COMPANY_TIME_ZONE } from "../lib/format";
 import { navigate } from "../lib/router";
+import type { Theme } from "../lib/theme";
 import { TV_STRINGS, format, type TvKey, type TvLang } from "../lib/tvStrings";
 import { useNow, useWallboard } from "../lib/useWallboard";
 import "../tv.css";
@@ -54,15 +57,13 @@ function readSettings() {
 
 const prefersReducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
-// TV palette: monochrome, one burnt-orange accent, yellow only for warnings.
-const INK = "#f5f5f5";
-const ACCENT = "#d95926";
-const MUTED_SERIES = "#8a8a8a";
-const WARN = "#facc15";
+// Same chart colours as the dashboard (they switch with light/dark mode).
+const SERIES_1 = "var(--chart-1)";
+const SERIES_2 = "var(--chart-2)";
 
 // ---------------------------------------------------------------------------
 
-export function TvPage() {
+export function TvPage({ theme, toggleTheme }: { theme: Theme; toggleTheme: () => void }) {
   const [settings] = useState(readSettings);
   const [lang, setLang] = useState<TvLang>(settings.lang);
   const t = useCallback(
@@ -103,7 +104,7 @@ export function TvPage() {
   return (
     <div
       className={`tv-root app-shell ${cursorHidden ? "tv-cursor-hidden" : ""}`}
-      data-theme="dark"
+      data-theme={theme}
       dir={lang === "ar" ? "rtl" : "ltr"}
       lang={lang}
     >
@@ -117,6 +118,8 @@ export function TvPage() {
         loading={loading}
         refreshMs={settings.refreshMs}
         fullscreen={fullscreen}
+        theme={theme}
+        onToggleTheme={toggleTheme}
         onToggleLang={toggleLang}
         onExit={exitTv}
       />
@@ -149,6 +152,8 @@ function TvHeader({
   loading,
   refreshMs,
   fullscreen,
+  theme,
+  onToggleTheme,
   onToggleLang,
   onExit,
 }: {
@@ -161,6 +166,8 @@ function TvHeader({
   loading: boolean;
   refreshMs: number;
   fullscreen: ReturnType<typeof useFullscreen>;
+  theme: Theme;
+  onToggleTheme: () => void;
   onToggleLang: () => void;
   onExit: () => void;
 }) {
@@ -210,6 +217,15 @@ function TvHeader({
           <span>{status.text}</span>
         </p>
         <div className="tv-controls">
+          <button
+            type="button"
+            className="tv-control tv-control-icon"
+            onClick={onToggleTheme}
+            aria-label={theme === "dark" ? t("lightMode") : t("darkMode")}
+            title={theme === "dark" ? t("lightMode") : t("darkMode")}
+          >
+            {theme === "dark" ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}
+          </button>
           <button type="button" className="tv-control" onClick={onToggleLang} aria-label={t("languageLabel")} title={t("languageLabel")}>
             <Languages aria-hidden="true" />
             <span lang={lang === "en" ? "ar" : "en"}>{t("language")}</span>
@@ -409,8 +425,8 @@ function ChartCarousel({ data, t, dwellMs }: { data: WallboardSummary; t: T; dwe
               textSize={textSize}
               showLegend={false}
               series={[
-                { id: "payments", label: t("payments"), color: INK, values: finance.history.map((p) => Number(p.revenue[currency])) },
-                { id: "expenses", label: t("expenses"), color: ACCENT, values: finance.history.map((p) => Number(p.expenses[currency])) },
+                { id: "payments", label: t("payments"), color: SERIES_1, values: finance.history.map((p) => Number(p.revenue[currency])) },
+                { id: "expenses", label: t("expenses"), color: SERIES_2, values: finance.history.map((p) => Number(p.expenses[currency])) },
               ]}
             />
           ),
@@ -427,7 +443,7 @@ function ChartCarousel({ data, t, dwellMs }: { data: WallboardSummary; t: T; dwe
           values={subs.newHistory.map((point) => point.value)}
           format={(value) => value.toLocaleString("en-US")}
           seriesLabel={t("newSubscriptions")}
-          color={INK}
+          color={SERIES_1}
           height={height}
           textSize={textSize}
           showLegend={false}
@@ -447,10 +463,10 @@ function ChartCarousel({ data, t, dwellMs }: { data: WallboardSummary; t: T; dwe
             textSize={textSize}
             format={(value) => value.toLocaleString("en-US")}
             slices={[
-              { id: "ACTIVE", label: t("ACTIVE"), value: subs.active, color: INK },
-              { id: "PENDING", label: t("PENDING"), value: subs.pending, color: WARN },
-              { id: "CANCELLED", label: t("CANCELLED"), value: subs.cancelled, color: ACCENT },
-              { id: "EXPIRED", label: t("EXPIRED"), value: subs.expired, color: MUTED_SERIES },
+              { id: "ACTIVE", label: t("ACTIVE"), value: subs.active, color: "var(--status-active)" },
+              { id: "PENDING", label: t("PENDING"), value: subs.pending, color: "var(--status-pending)" },
+              { id: "CANCELLED", label: t("CANCELLED"), value: subs.cancelled, color: "var(--status-cancelled)" },
+              { id: "EXPIRED", label: t("EXPIRED"), value: subs.expired, color: "var(--status-expired)" },
             ]}
           />
         </div>
@@ -476,8 +492,8 @@ function ChartCarousel({ data, t, dwellMs }: { data: WallboardSummary; t: T; dwe
   const slide = slides[current];
   const legend = slide.id.startsWith("revenue")
     ? [
-        { label: t("payments"), color: INK },
-        { label: t("expenses"), color: ACCENT },
+        { label: t("payments"), color: SERIES_1 },
+        { label: t("expenses"), color: SERIES_2 },
       ]
     : [];
 

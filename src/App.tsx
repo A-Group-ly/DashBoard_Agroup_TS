@@ -102,8 +102,8 @@ function SignedInApp({
   // It is still behind sign-in and the same server-side role checks.
   if (page === "tv") {
     return (
-      <Suspense fallback={<FullPageLoader theme="dark" label="Starting TV mode..." />}>
-        <TvPage />
+      <Suspense fallback={<FullPageLoader theme={theme} label="Starting TV mode..." />}>
+        <TvPage theme={theme} toggleTheme={toggleTheme} />
       </Suspense>
     );
   }
