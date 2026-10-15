@@ -13,11 +13,18 @@ export const DonutChart = memo(function DonutChart({
   slices,
   format,
   centerLabel,
+  size = 180,
+  textSize = 11,
+  hideTitle = false,
 }: {
   title: string;
   slices: DonutSlice[];
   format: (value: number) => string;
   centerLabel: string;
+  /** Diameter in px (TV mode uses a larger donut). */
+  size?: number;
+  textSize?: number;
+  hideTitle?: boolean;
 }) {
   const [active, setActive] = useState<string | null>(null);
   const visible = slices.filter((slice) => slice.value > 0);
@@ -26,15 +33,14 @@ export const DonutChart = memo(function DonutChart({
   if (total <= 0) {
     return (
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-slate-800">{title}</h3>
+        {!hideTitle && <h3 className="mb-3 text-sm font-semibold text-slate-800">{title}</h3>}
         <EmptyChart>Nothing recorded in this range.</EmptyChart>
       </div>
     );
   }
 
-  const size = 180;
-  const radius = 72;
-  const thickness = 26;
+  const radius = size * 0.4;
+  const thickness = size * 0.145;
   const center = size / 2;
   const gap = visible.length > 1 ? 0.012 : 0; // small gap between slices, in turns
 
@@ -51,7 +57,7 @@ export const DonutChart = memo(function DonutChart({
 
   return (
     <div>
-      <h3 className="mb-3 text-sm font-semibold text-slate-800">{title}</h3>
+      {!hideTitle && <h3 className="mb-3 text-sm font-semibold text-slate-800">{title}</h3>}
       <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center">
         <svg
           width={size}
@@ -78,14 +84,14 @@ export const DonutChart = memo(function DonutChart({
               </title>
             </path>
           ))}
-          <text x={center} y={center - 4} textAnchor="middle" fontSize="11" fill="var(--chart-ink)">
+          <text x={center} y={center - textSize * 0.4} textAnchor="middle" fontSize={textSize} fill="var(--chart-ink)">
             {focus ? focus.label : centerLabel}
           </text>
           <text
             x={center}
-            y={center + 14}
+            y={center + textSize * 1.3}
             textAnchor="middle"
-            fontSize="15"
+            fontSize={Math.round(textSize * 1.4)}
             fontWeight="700"
             className="fill-slate-900"
           >

@@ -10,6 +10,7 @@ import { createSql } from "./db";
 import type { Env, WorkerContext } from "./env";
 import { HttpError, errorResponse, json, readJson } from "./http";
 import { localNow, parsePeriod, resolvePeriod } from "./periods";
+import { getWallboard } from "./wallboard";
 import { listTeam, resolveCurrentUser, updateTeamMember } from "./users";
 
 const DEFAULT_TIME_ZONE = "Africa/Tripoli";
@@ -79,6 +80,13 @@ async function handleApi(
   }
 
   const user = await resolveCurrentUser(sql, env, ctx, claims);
+
+  // TV / wallboard: same sign-in and role checks as the dashboard; returns
+  // aggregates only (no customer-level data) for shared screens.
+  if (pathname === "/api/wallboard" && method === "GET") {
+    need("dashboard:view", user.role);
+    return json(await getWallboard(sql, user, env.COMPANY_TIME_ZONE || DEFAULT_TIME_ZONE));
+  }
 
   if (pathname === "/api/me" && method === "GET") {
     return json(user);

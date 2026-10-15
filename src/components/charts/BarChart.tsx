@@ -15,11 +15,19 @@ export const BarChart = memo(function BarChart({
   seriesLabel,
   color = "var(--chart-1)",
   signed = false,
+  height: fixedHeight,
+  textSize = 11,
+  showLegend = true,
 }: {
   labels: string[];
   values: number[];
   format: (value: number) => string;
   ariaLabel: string;
+  /** Fixed chart height in px (TV mode); defaults to 240/300. */
+  height?: number;
+  /** Axis label size in px; margins grow with it (TV mode uses ~18-26). */
+  textSize?: number;
+  showLegend?: boolean;
   seriesLabel: string;
   color?: string;
   signed?: boolean;
@@ -37,18 +45,19 @@ export const BarChart = memo(function BarChart({
 
   const { low, high, ticks } = niceScale(Math.min(...values), Math.max(...values));
   const compact = width < 520;
-  const height = compact ? 240 : 300;
-  const left = compact ? 40 : 52;
+  const k = textSize / 11;
+  const height = fixedHeight ?? (compact ? 240 : 300);
+  const left = Math.round((compact ? 40 : 52) * k);
   const right = 8;
   const top = 12;
-  const bottom = 30;
+  const bottom = Math.round(30 * k);
   const plotWidth = width - left - right;
   const plotHeight = height - top - bottom;
   const slot = plotWidth / values.length;
   const barWidth = Math.max(4, Math.min(36, slot * 0.62));
   const yAt = (value: number) => top + ((high - value) / (high - low)) * plotHeight;
   const zeroY = yAt(0);
-  const stride = labelStride(slot, compact ? 40 : 48);
+  const stride = labelStride(slot, (compact ? 40 : 48) * k);
   const barColor = (value: number) =>
     signed ? (value < 0 ? "var(--chart-negative)" : "var(--chart-positive)") : color;
 
@@ -82,7 +91,7 @@ export const BarChart = memo(function BarChart({
                 stroke="var(--chart-grid)"
                 strokeDasharray={tick === 0 ? undefined : "3 5"}
               />
-              <text x={left - 8} y={yAt(tick) + 4} textAnchor="end" fontSize="11" fill="var(--chart-ink)">
+              <text x={left - 8} y={yAt(tick) + textSize * 0.35} textAnchor="end" fontSize={textSize} fill="var(--chart-ink)">
                 {compactNumber(tick)}
               </text>
             </g>
@@ -116,9 +125,9 @@ export const BarChart = memo(function BarChart({
               <text
                 key={label + index}
                 x={left + index * slot + slot / 2}
-                y={height - 8}
+                y={height - Math.round(8 * k)}
                 textAnchor="middle"
-                fontSize="11"
+                fontSize={textSize}
                 fontWeight={index === active ? 700 : 400}
                 fill="var(--chart-ink)"
               >
@@ -128,7 +137,7 @@ export const BarChart = memo(function BarChart({
           )}
         </svg>
       </div>
-      <div className="mt-3">
+      {showLegend && (<div className="mt-3">
         <Legend
           items={
             signed
@@ -139,7 +148,7 @@ export const BarChart = memo(function BarChart({
               : [{ label: seriesLabel, color }]
           }
         />
-      </div>
+      </div>)}
     </div>
   );
 });

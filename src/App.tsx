@@ -16,6 +16,8 @@ const AUTH_ROUTES = ["/sign-in", "/sign-up"];
 
 // Only Super admins open this page, so it is downloaded on demand.
 const TeamPage = lazy(() => import("./pages/TeamPage").then((module) => ({ default: module.TeamPage })));
+// TV / wallboard mode is also downloaded only when opened.
+const TvPage = lazy(() => import("./pages/TvPage").then((module) => ({ default: module.TvPage })));
 
 export default function App() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -80,7 +82,7 @@ function SignedInApp({
   }, [api, attempt]);
 
   const canManageTeam = user ? can(user.role, "team:manage") : false;
-  const page = pathname === "/team" && canManageTeam ? "team" : "overview";
+  const page = pathname === "/tv" ? "tv" : pathname === "/team" && canManageTeam ? "team" : "overview";
 
   // Unknown paths (or /team without permission) fall back to the overview.
   useEffect(() => {
@@ -95,6 +97,16 @@ function SignedInApp({
   }
 
   if (!user) return <FullPageLoader theme={theme} label="Loading your workspace..." />;
+
+  // TV mode takes the whole screen, without the normal header and menus.
+  // It is still behind sign-in and the same server-side role checks.
+  if (page === "tv") {
+    return (
+      <Suspense fallback={<FullPageLoader theme="dark" label="Starting TV mode..." />}>
+        <TvPage />
+      </Suspense>
+    );
+  }
 
   return (
     <AppShell user={user} page={page} theme={theme} toggleTheme={toggleTheme}>

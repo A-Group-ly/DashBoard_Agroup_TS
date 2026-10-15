@@ -25,6 +25,7 @@ The A-Group dashboard brings subscription activity and financial summaries into 
 - **Financial overview first:** total paid, net profit/loss, outstanding debts (with how much is already paid), what customers still owe, and what is due by the end of the current month.
 - **Date filters:** daily, weekly, monthly, quarterly, semiannual, and any custom date range.
 - **Fair comparisons:** every range is compared with the equivalent previous period. A period that is still running is compared to the same point last time (1–14 Oct vs 1–14 Sep); a custom range is compared with the same number of days just before it.
+- **TV mode:** a full-screen wallboard for office screens (see [TV mode](#tv-mode-wallboard)).
 - **Charts slideshow:** the charts rotate every 8 seconds with a progress bar. They pause while you point at them, while you use the keyboard there, for 12 seconds after a touch, and while the tab is hidden. You can also click a tab, use the arrow keys, or swipe on phones. Devices set to "reduce motion" do not auto-rotate.
 - **Charts section** with tabs: revenue vs expenses (line), net profit (bar), revenue by payment method and by plan (pie), and subscriptions (bar + pie). Every chart has hover tooltips and works in both themes.
 - Subscription, payment, expense, profit/loss, and payable figures from PostgreSQL.
@@ -44,6 +45,50 @@ The A-Group dashboard brings subscription activity and financial summaries into 
 - Brand fonts were subset to Latin WOFF: about 110 KB instead of about 960 KB.
 - Hand-written SVG charts, so no chart library is downloaded.
 - `public/_headers` lets browsers cache hashed assets and fonts for a year.
+
+## TV mode (wallboard)
+
+A full-screen board for an office TV or shared monitor. Open it with the **TV mode** button on the dashboard, or go to `/tv`.
+
+| English | Arabic (right-to-left) |
+| --- | --- |
+| ![TV mode](docs/screenshots/tv-mode.png) | ![TV mode in Arabic](docs/screenshots/tv-mode-arabic.png) |
+
+**What it shows (aggregates only):**
+
+| Figure | How it is calculated |
+| --- | --- |
+| Collected this month | Successful payments from the 1st of the month until now, LYD and USD separately, compared with the same point last month |
+| Monthly recurring revenue (MRR) | Active subscriptions: monthly plans at their price + yearly plans ÷ 12, per currency |
+| Active subscriptions / customers | Subscriptions with status ACTIVE; companies with at least one subscription |
+| Customers still owe | Amount of PENDING subscriptions that have no successful payment |
+| Renewals · next 7 days | Next billing date of active subscriptions, counted per day in Tripoli time |
+| Failed payments · 30 days | Payments with status FAILED created in the last 30 days |
+| Charts (rotate every 20 s) | Payments vs expenses per month (one slide per currency), new subscriptions per month, subscriptions by status |
+| Needs attention | Counts of failed payments, unpaid sign-ups and bills due this month |
+
+LYD and USD are always shown separately, never added. The **Sample data** badge appears automatically while the database still contains the demo records.
+
+**Never shown on the TV:** customer names, emails, phone numbers, invoice ids or single transactions. The TV uses its own endpoint, `GET /api/wallboard`, which only returns totals and counts. It needs a signed-in user, and money figures are only included for the Finance and Super admin roles (checked on the server).
+
+**Behaviour**
+
+- Refreshes every 60 s, one request at a time. If the connection drops, the last figures stay on screen with a yellow **Connection lost** notice, retries back off (15 s → 5 min), and it recovers by itself. After 2.5 missed refreshes the status turns to **Data may be out of date**.
+- **Full screen** button (browsers only allow it after a click). **Escape** or **Exit TV mode** returns to the dashboard; in full screen, Escape first leaves full screen.
+- English / Arabic switch; Arabic uses right-to-left layout. Chart time axes stay left-to-right.
+- Works at 1366×768, 1920×1080 and 4K without scrolling; on small screens it becomes a scrollable single column.
+- The mouse pointer hides after 4 s without movement. With "reduce motion" turned on, charts do not rotate (choose them with the indicator buttons).
+- Settings in the address: `/tv?refresh=60&dwell=20&lang=ar` (refresh 15–600 s, dwell 10–120 s).
+
+**Setting up a shared office screen**
+
+1. Create a dedicated Clerk account for the screen (for example `tv@your-company`).
+2. Give it the **Support** role on Team & roles if visitors can see the screen (no money figures), or **Finance** if only staff can see it.
+3. Sign in on the TV browser and open `/tv`. The session lasts as long as Clerk's session lifetime (Clerk → Sessions); sign in again when it expires.
+
+A display-only link (no sign-in) is not implemented on purpose. It would need a revocable, narrowly scoped, expiring token, and should only be added after that design is approved.
+
+**Known gaps:** there is no history of status changes, so an "active subscriptions over time" trend cannot be shown honestly; the board shows new subscriptions per month instead. "Collected vs outstanding" is not charted because receivables are not reconciled against payments per period.
 
 ## Roles
 
